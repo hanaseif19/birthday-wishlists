@@ -7,7 +7,7 @@ Friends sign in with Google, then each person can edit only their own list. Ever
 2. **Build → Authentication → Get started → Sign-in method → Google → Enable → Save**
 3. **Build → Firestore Database → Create database**. Pick a location near you (e.g. `europe-west`) and start in **production mode**.
 4. **Project settings (gear icon) → Your apps → Web (</>)**. Register an app; you don't need Firebase Hosting ticked here.
-   Copy the `firebaseConfig` values into `public/index.html` (search for `FIREBASE_CONFIG`).
+   Copy the `firebaseConfig` values into `docs/index.html` (search for `FIREBASE_CONFIG`).
    You only need `apiKey`, `authDomain`, `projectId` and `appId`.
    The config is safe to put in the page. The Firestore rules are what protect the data.
 
@@ -22,9 +22,9 @@ This uploads the site and the security rules in `firestore.rules`.
 You'll get a link like `https://YOUR_PROJECT_ID.web.app`. Send that to your friends.
 
 ## Updating later
-Edit `public/index.html` and run `firebase deploy --project YOUR_PROJECT_ID` again.
+Edit `docs/index.html` and run `firebase deploy --project YOUR_PROJECT_ID` again.
 
 ## Hosting somewhere else (Netlify, Vercel, GitHub Pages)
-You can upload just `public/index.html` there instead. Then add that site's domain under
+You can upload just `docs/index.html` there instead. Then add that site's domain under
 **Authentication → Settings → Authorized domains**, or Google sign-in will fail.
 Deploy the rules once with: `firebase deploy --only firestore:rules --project YOUR_PROJECT_ID`
