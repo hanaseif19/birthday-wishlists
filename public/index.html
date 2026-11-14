@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Birthday Wishlists</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: quiet, tidy, friendly
+   IDEA: a plain shared notebook, one page per friend
+   PICTURE: the lists themselves
+   COLOUR and TYPE: black on white (night: white on near-black), one grey for secondary text; Inter only
+   LAYOUT: narrow header, your list first, then everyone's lists in a wrapping grid */
+:root{color-scheme:light;
+--bg:light-dark(#ffffff,#111111);--ink:light-dark(#111111,#f2f2f2);--soft:light-dark(#6e6e6e,#9a9a9a);
+--card:light-dark(#ffffff,#171717);--line:light-dark(#e9e9e9,#2a2a2a);--chip:light-dark(#f3f3f3,#232323);
+--field:light-dark(#ffffff,#141414);
+--acc:light-dark(#ff4f79,#ff7896);--acct:light-dark(#fff0f4,#2c1a20);--sun:#ffc23d;--mint:#3ccfb4;--sky:#5aa9ff}
+:root,:root[data-theme=dark],:root[data-theme=light]{color-scheme:light}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,-apple-system,sans-serif;overflow-x:clip;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-weight:600;line-height:1.1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.top{max-width:1240px;margin:0 auto;padding:48px max(5vw,16px) 8px;position:relative}
+.confetti{display:flex;gap:6px;margin-bottom:14px}.confetti i{width:10px;height:10px;border-radius:3px;display:block;animation:bob 2.6s ease-in-out infinite}
+.confetti i:nth-child(1){background:var(--acc)}.confetti i:nth-child(2){background:var(--sun);border-radius:50%;animation-delay:-.6s}.confetti i:nth-child(3){background:var(--mint);transform:rotate(45deg);animation-delay:-1.2s}.confetti i:nth-child(4){background:var(--sky);border-radius:50%;animation-delay:-1.8s}
+@keyframes bob{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@media(prefers-reduced-motion:reduce){.confetti i{animation:none}}
+.top h1{font-size:clamp(32px,4.5vw,40px)}
+.top p{margin:8px 0 0;max-width:60ch;color:var(--soft)}
+main{max-width:1240px;margin:0 auto;padding:24px max(5vw,16px) 64px}
+.status{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:20px;color:var(--soft);font-size:15px}
+.status[hidden]{display:none}
+.tag{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;transition:transform .2s,box-shadow .2s}
+.grid .tag:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.mine{padding:24px;border-color:var(--acc);box-shadow:0 0 0 3px var(--acct)}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+label{display:block;font-weight:500;font-size:13px;color:var(--soft);margin-bottom:6px}
+input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;width:100%}
+input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acct)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.f{flex:1 1 180px}.f.sm{flex:0 1 170px}
+button{font:inherit;font-size:15px;font-weight:500;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--acc);cursor:pointer;background:var(--acc);color:#fff;transition:transform .15s}
+button:not(.icon):not(:disabled):active{transform:scale(.97)}
+button.ghost{background:transparent;color:var(--acc);border-color:var(--line)}
+button.icon{min-height:32px;padding:0 10px;font-size:13px;background:transparent;color:var(--soft);border:1px solid transparent}
+button.icon:hover{border-color:var(--line);color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.seg{display:inline-flex;background:var(--chip);border-radius:999px;padding:3px;gap:3px}
+.seg button{min-height:38px;border:0;border-radius:999px;background:transparent;color:var(--soft);padding:0 14px}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--acc);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.sec{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px;margin:48px 0 16px}
+.sec h2{font-size:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:16px}
+.who{display:flex;gap:12px;align-items:center}
+.av{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:16px;color:#1a1a1a}
+.who h3{font-size:18px}
+.bday{font-size:13px;color:var(--soft);white-space:nowrap}
+.soon{color:var(--acc);font-weight:600}
+.grp{margin-top:16px}
+.grp h4{margin:0 0 4px;font-size:13px;font-weight:500;color:var(--soft);display:flex;align-items:center;gap:6px}
+.grp h4::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.grp h4.todo::before{background:var(--mint)}
+ul{list-style:none;margin:0;padding:0}
+li.it{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.it .t{overflow-wrap:anywhere}
+.it a{color:var(--acc);background:var(--acct);font-size:13px;font-weight:500;white-space:nowrap;text-decoration:none;padding:4px 10px;border-radius:999px}
+.it a:hover{filter:brightness(.97)}
+.it .acts{display:flex;gap:4px;flex:none;align-items:center}
+.empty{color:var(--soft);font-size:15px;padding:6px 0;margin:12px 0 0}
+.formbox{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 8px 8px 16px;border-radius:10px;display:flex;gap:12px;align-items:center;font-size:15px;max-width:calc(100% - 32px)}
+.toast[hidden]{display:none}
+.toast button{min-height:34px;background:var(--sun);color:#1a1a1a;border-color:var(--sun)}
+@media(max-width:600px){.f.sm{flex:1 1 100%}.row>button{width:100%}.top{padding-top:32px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="confetti" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h1>Birthday Wishlists</h1><button id="signout" class="ghost" hidden>Sign out</button></div>
+  <p>Add your name, your birthday and the things you'd love. Everyone in the group can see everyone's list.</p>
+</header>
+
+<main>
+  <div class="status" id="status">Connecting to the shared lists…</div>
+
+  <section class="tag mine" id="minebox" aria-labelledby="mineh">
+    <h2 id="mineh" style="font-size:20px">Your list</h2>
+    <div class="row" style="margin-top:14px">
+      <div class="f"><label for="myname">Your name</label><input id="myname" maxlength="40" placeholder="e.g. Hana" autocomplete="nickname"></div>
+      <div class="f sm"><label for="mybday">Birthday</label><input id="mybday" type="date"></div>
+      <button id="saveme">Save</button>
+    </div>
+
+    <form class="formbox" id="addform">
+      <div class="row">
+        <div><label id="kindl">Type</label>
+          <div class="seg" role="group" aria-labelledby="kindl">
+            <button type="button" data-k="gift" aria-pressed="true">Gift</button>
+            <button type="button" data-k="todo" aria-pressed="false">Thing to do</button>
+          </div>
+        </div>
+        <div class="f"><label for="ititle">Item name</label><input id="ititle" maxlength="120" required placeholder="e.g. Film camera"></div>
+        <div class="f"><label for="ilink">Link (optional)</label><input id="ilink" maxlength="500" placeholder="https://…" inputmode="url"></div>
+        <button id="addbtn" type="submit">Add</button>
+        <button id="cancelbtn" type="button" class="ghost" hidden>Cancel</button>
+      </div>
+    </form>
+
+    <div id="mylist"></div>
+  </section>
+
+  <div class="sec">
+    <h2>Everyone's lists</h2>
+    <div class="f sm" style="flex:0 1 240px"><label for="q">Find a friend</label><input id="q" type="search" placeholder="Search names"></div>
+  </div>
+  <div class="grid" id="others"></div>
+</main>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastmsg"></span><button id="undo">Undo</button></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ===== Paste your Firebase web app config here (Firebase console → Project settings → Your apps) ===== */
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  appId: ""
+};
+/* ===================================================================================================== */
+
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+
+/* state */
+let auth = null, db = null, myId = null, people = {}, me = { name: '', bday: '', items: [] }, kind = 'gift', editing = null, lastDeleted = null, toastTimer = null, writing = Promise.resolve();
+
+const status = (msg) => { const el = $('status'); if (msg) { el.textContent = msg; el.hidden = false; } else el.hidden = true; };
+const lockMine = (on) => { document.querySelectorAll('#minebox input, #minebox button').forEach(e => e.disabled = on); };
+lockMine(true);
+
+/* birthday helpers */
+const daysUntil = (iso) => {
+  if (!iso) return null;
+  const [, m, d] = iso.split('-').map(Number); if (!m || !d) return null;
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  let next = new Date(now.getFullYear(), m - 1, d);
+  if (next < now) next = new Date(now.getFullYear() + 1, m - 1, d);
+  return Math.round((next - now) / 864e5);
+};
+const bdayText = (iso) => {
+  const n = daysUntil(iso); if (n === null) return '<span class="bday">No birthday added</span>';
+  const [, m, d] = iso.split('-').map(Number);
+  const label = new Date(2000, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const when = n === 0 ? 'today 🎉' : n === 1 ? 'tomorrow' : `in ${n} days`;
+  return `<span class="bday ${n <= 14 ? 'soon' : ''}">${esc(label)} · ${when}</span>`;
+};
+const safeLink = (u) => {
+  if (!u) return '';
+  let v = String(u).trim(); if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  try { const url = new URL(v); return /^https?:$/.test(url.protocol) ? url.href : ''; } catch { return ''; }
+};
+const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return 'link'; } };
+
+/* render */
+const itemsHtml = (items, mine) => {
+  const groups = [['gift', 'Gifts'], ['todo', 'Things to do']];
+  const body = groups.map(([k, label]) => {
+    const list = (items || []).filter(i => (i.kind || 'gift') === k);
+    if (!list.length) return '';
+    return `<div class="grp"><h4 class="${k}">${label}</h4><ul>${list.map(i => {
+      const href = safeLink(i.link);
+      return `<li class="it"><span class="t">${esc(i.title)}</span><span class="acts">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(host(href))}</a>` : ''}${mine ? `<button class="icon" data-edit="${esc(i.id)}" aria-label="Edit ${esc(i.title)}">Edit</button><button class="icon" data-del="${esc(i.id)}" aria-label="Remove ${esc(i.title)}">✕</button>` : ''}</span></li>`;
+    }).join('')}</ul></div>`;
+  }).join('');
+  return body || `<p class="empty">${mine ? 'Nothing here yet. Add your first gift or thing to do above.' : 'No items yet.'}</p>`;
+};
+
+const avatar = (name, key) => {
+  let h = 0; for (const c of key || name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const P = ['#ffd6e0','#ffe9a8','#c8f2e8','#d6e8ff','#e8dcff','#ffdcc8'];
+  return `<span class="av" style="background:${P[h % P.length]}">${esc((name || '?').trim().charAt(0).toUpperCase() || '?')}</span>`;
+};
+
+const renderMine = () => { $('mylist').innerHTML = itemsHtml(me.items, true); };
+
+const renderOthers = () => {
+  const q = $('q').value.trim().toLowerCase();
+  const list = Object.entries(people)
+    .filter(([id, p]) => id !== myId && (p.name || (p.items || []).length))
+    .filter(([, p]) => !q || (p.name || '').toLowerCase().includes(q))
+    .sort((a, b) => (daysUntil(a[1].bday) ?? 999) - (daysUntil(b[1].bday) ?? 999));
+  $('others').innerHTML = list.length ? list.map(([id, p]) => `
+    <article class="tag">
+      <div class="who">${avatar(p.name, id)}<div><h3>${esc(p.name || 'Someone')}</h3>${bdayText(p.bday)}</div></div>
+      ${itemsHtml(p.items, false)}
+    </article>`).join('')
+    : `<p class="empty">${q ? 'No friend matches that name.' : "No one else has added a list yet. Share this page with your friends so they can add theirs."}</p>`;
+};
+
+/* writes: one at a time for my doc */
+const save = () => {
+  if (!db || !myId) return Promise.resolve();
+  const data = { name: me.name, bday: me.bday, items: me.items, updated: Date.now() };
+  writing = writing.then(() => setDoc(doc(db, 'wishes', myId), data)).catch(err => {
+    console.log('[wishlist] save failed', err);
+    status("Couldn't save your change. Check your connection and try again.");
+  });
+  return writing;
+};
+
+/* events */
+$('saveme').addEventListener('click', () => {
+  const n = $('myname').value.trim();
+  if (!n) { $('myname').focus(); return; }
+  me.name = n; me.bday = $('mybday').value; save();
+  $('saveme').textContent = 'Saved ✓'; setTimeout(() => $('saveme').textContent = 'Save', 1500);
+});
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  kind = b.dataset.k;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  $('ititle').placeholder = kind === 'gift' ? 'e.g. Film camera' : 'e.g. Sunset boat ride';
+}));
+
+const resetForm = () => {
+  editing = null; $('ititle').value = ''; $('ilink').value = '';
+  $('addbtn').textContent = 'Add'; $('cancelbtn').hidden = true;
+};
+$('cancelbtn').addEventListener('click', resetForm);
+
+$('addform').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const title = $('ititle').value.trim(); if (!title) return;
+  if (!me.name) {
+    const n = $('myname').value.trim();
+    if (!n) { status('Add your name first, so friends know whose list this is.'); $('myname').focus(); return; }
+    me.name = n; me.bday = $('mybday').value;
+  }
+  const link = $('ilink').value.trim();
+  if (editing) {
+    me.items = me.items.map(i => i.id === editing ? { ...i, title, link, kind } : i);
+  } else {
+    me.items = [...me.items, { id: uid(), kind, title, link }];
+  }
+  resetForm(); renderMine(); save(); $('ititle').focus();
+});
+
+$('mylist').addEventListener('click', (e) => {
+  const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+  if (ed) {
+    const it = me.items.find(i => i.id === ed.dataset.edit); if (!it) return;
+    editing = it.id; $('ititle').value = it.title; $('ilink').value = it.link || '';
+    document.querySelector(`.seg button[data-k="${it.kind || 'gift'}"]`).click();
+    $('addbtn').textContent = 'Save item'; $('cancelbtn').hidden = false; $('ititle').focus();
+  }
+  if (del) {
+    const idx = me.items.findIndex(i => i.id === del.dataset.del); if (idx < 0) return;
+    lastDeleted = { item: me.items[idx], idx };
+    me.items = me.items.filter((_, i) => i !== idx);
+    renderMine(); save();
+    $('toastmsg').textContent = `Removed "${lastDeleted.item.title}"`; $('toast').hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 6000);
+  }
+});
+
+$('undo').addEventListener('click', () => {
+  if (!lastDeleted) return;
+  const arr = [...me.items]; arr.splice(lastDeleted.idx, 0, lastDeleted.item); me.items = arr;
+  lastDeleted = null; $('toast').hidden = true; renderMine(); save();
+});
+
+$('q').addEventListener('input', renderOthers);
+
+/* connect */
+renderMine(); renderOthers();
+const showSignIn = () => {
+  const el = $('status'); el.hidden = false;
+  el.innerHTML = '<div class="row" style="align-items:center;justify-content:space-between"><span>Sign in with Google to see everyone\'s lists and add yours.</span><button id="signin">Sign in with Google</button></div>';
+  $('signin').addEventListener('click', () => signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+    console.log('[wishlist] sign-in failed', err);
+    status("Sign-in didn't work. If a popup was blocked, allow popups for this site and try again.");
+  }));
+};
+let unsub = null;
+if (!FIREBASE_CONFIG.apiKey) {
+  status('Setup needed: paste your Firebase config at the top of index.html (see the README).');
+} else {
+  const app = initializeApp(FIREBASE_CONFIG);
+  const auth0 = getAuth(app); auth = auth0;
+  db = getFirestore(app);
+  onAuthStateChanged(auth, (u) => {
+    if (unsub) { unsub(); unsub = null; }
+    if (!u) { myId = null; people = {}; lockMine(true); $('signout').hidden = true; renderMine(); renderOthers(); showSignIn(); return; }
+    myId = u.uid; $('signout').hidden = false;
+    status('Loading the shared lists…');
+    const timer = setTimeout(() => status("The shared lists are taking a while to load. Check your connection."), 10000);
+    unsub = onSnapshot(collection(db, 'wishes'), (snap) => {
+      clearTimeout(timer);
+      const next = {}; snap.forEach(d => { next[d.id] = d.data(); });
+      people = next;
+      const mineDoc = people[myId];
+      if (mineDoc && !editing) {
+        me = { name: mineDoc.name || '', bday: mineDoc.bday || '', items: Array.isArray(mineDoc.items) ? mineDoc.items : [] };
+      } else if (!mineDoc && !me.name && u.displayName) {
+        me.name = u.displayName.split(' ')[0];
+      }
+      if (document.activeElement !== $('myname')) $('myname').value = me.name;
+      if (document.activeElement !== $('mybday')) $('mybday').value = me.bday;
+      lockMine(false); status(''); renderMine(); renderOthers();
+    }, (err) => {
+      clearTimeout(timer); console.log('[wishlist] load failed', err);
+      status("Couldn't load the shared lists. Check that Firestore is set up and the rules are deployed.");
+    });
+  });
+  $('signout').addEventListener('click', () => signOut(auth));
+}
+}
+</script>
+</body>
+</html>

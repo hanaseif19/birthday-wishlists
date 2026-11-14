@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Everyone signed in can read all lists; each person can only write their own.
+    match /wishes/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+                   && request.resource.data.items is list
+                   && request.resource.data.items.size() <= 200;
+    }
+  }
+}
