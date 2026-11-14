@@ -1,12 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Everyone signed in can read all lists; each person can only write their own.
-    match /wishes/{uid} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid
-                   && request.resource.data.items is list
-                   && request.resource.data.items.size() <= 200;
+    // Anyone with the link can read all lists.
+    // Each list is protected by a key that only its owner's browser holds:
+    // the document stores h = sha256(key); to change it you must send the key k whose hash matches h,
+    // plus a fresh h for next time.
+    match /wishes/{id} {
+      function shape(d) {
+        return d.keys().hasOnly(['name', 'bday', 'items', 'updated', 'h', 'k'])
+          && d.name is string && d.name.size() <= 40
+          && d.bday is string && d.bday.size() <= 10
+          && d.items is list && d.items.size() <= 200
+          && d.h is string && d.h.size() == 64;
+      }
+      allow read: if true;
+      allow create: if id.size() == 48 && shape(request.resource.data) && !('k' in request.resource.data);
+      allow update: if shape(request.resource.data)
+        && request.resource.data.k is string
+        && hashing.sha256(request.resource.data.k).toHexString().lower() == resource.data.h.lower();
+      allow delete: if false;
     }
   }
 }

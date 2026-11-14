@@ -79,7 +79,7 @@ li.it{display:flex;gap:10px;align-items:center;justify-content:space-between;pad
 <body>
 <header class="top">
   <div class="confetti" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h1>Birthday Wishlists</h1><button id="signout" class="ghost" hidden>Sign out</button></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h1>Birthday Wishlists</h1></div>
   <p>Add your name, your birthday and the things you'd love. Everyone in the group can see everyone's list.</p>
 </header>
 
@@ -123,15 +123,14 @@ li.it{display:flex;gap:10px;align-items:center;justify-content:space-between;pad
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ===== Paste your Firebase web app config here (Firebase console → Project settings → Your apps) ===== */
 const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  appId: ""
+  "apiKey": "AIzaSyBwdDMSu9rf3YJAiVcD5JqQkZjnFvOvqHs",
+  "authDomain": "birthday-wishlists-7c5e73.firebaseapp.com",
+  "projectId": "birthday-wishlists-7c5e73",
+  "appId": "1:14008106906:web:d8faed4698932cc9130423"
 };
 /* ===================================================================================================== */
 
@@ -142,7 +141,7 @@ const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(
 
 
 /* state */
-let auth = null, db = null, myId = null, people = {}, me = { name: '', bday: '', items: [] }, kind = 'gift', editing = null, lastDeleted = null, toastTimer = null, writing = Promise.resolve();
+let db = null, myId = null, people = {}, me = { name: '', bday: '', items: [] }, kind = 'gift', editing = null, lastDeleted = null, toastTimer = null, writing = Promise.resolve();
 
 const status = (msg) => { const el = $('status'); if (msg) { el.textContent = msg; el.hidden = false; } else el.hidden = true; };
 const lockMine = (on) => { document.querySelectorAll('#minebox input, #minebox button').forEach(e => e.disabled = on); };
@@ -207,11 +206,26 @@ const renderOthers = () => {
     : `<p class="empty">${q ? 'No friend matches that name.' : "No one else has added a list yet. Share this page with your friends so they can add theirs."}</p>`;
 };
 
+/* identity: a private key kept in this browser; the database stores only a hash of it */
+const LS = 'bw-identity-v1';
+const loadId = () => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } };
+const storeId = (v) => { try { localStorage.setItem(LS, JSON.stringify(v)); } catch {} };
+const rand = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), b => b.toString(16).padStart(2, '0')).join('');
+const sha = async (t) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t))), b => b.toString(16).padStart(2, '0')).join('');
+let ident = loadId();
+if (!ident) { ident = { id: rand(), key: rand(), created: false }; storeId(ident); }
+myId = ident.id;
+
 /* writes: one at a time for my doc */
 const save = () => {
-  if (!db || !myId) return Promise.resolve();
-  const data = { name: me.name, bday: me.bday, items: me.items, updated: Date.now() };
-  writing = writing.then(() => setDoc(doc(db, 'wishes', myId), data)).catch(err => {
+  if (!db) return Promise.resolve();
+  writing = writing.then(async () => {
+    const nextKey = rand();
+    const data = { name: me.name, bday: me.bday, items: me.items, updated: Date.now(), h: await sha(nextKey) };
+    if (ident.created) data.k = ident.key;
+    await setDoc(doc(db, 'wishes', myId), data);
+    ident = { ...ident, key: nextKey, created: true }; storeId(ident);
+  }).catch(err => {
     console.log('[wishlist] save failed', err);
     status("Couldn't save your change. Check your connection and try again.");
   });
@@ -283,46 +297,27 @@ $('q').addEventListener('input', renderOthers);
 
 /* connect */
 renderMine(); renderOthers();
-const showSignIn = () => {
-  const el = $('status'); el.hidden = false;
-  el.innerHTML = '<div class="row" style="align-items:center;justify-content:space-between"><span>Sign in with Google to see everyone\'s lists and add yours.</span><button id="signin">Sign in with Google</button></div>';
-  $('signin').addEventListener('click', () => signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
-    console.log('[wishlist] sign-in failed', err);
-    status("Sign-in didn't work. If a popup was blocked, allow popups for this site and try again.");
-  }));
-};
-let unsub = null;
-if (!FIREBASE_CONFIG.apiKey) {
-  status('Setup needed: paste your Firebase config at the top of index.html (see the README).');
-} else {
+{
   const app = initializeApp(FIREBASE_CONFIG);
-  const auth0 = getAuth(app); auth = auth0;
   db = getFirestore(app);
-  onAuthStateChanged(auth, (u) => {
-    if (unsub) { unsub(); unsub = null; }
-    if (!u) { myId = null; people = {}; lockMine(true); $('signout').hidden = true; renderMine(); renderOthers(); showSignIn(); return; }
-    myId = u.uid; $('signout').hidden = false;
-    status('Loading the shared lists…');
-    const timer = setTimeout(() => status("The shared lists are taking a while to load. Check your connection."), 10000);
-    unsub = onSnapshot(collection(db, 'wishes'), (snap) => {
-      clearTimeout(timer);
-      const next = {}; snap.forEach(d => { next[d.id] = d.data(); });
-      people = next;
-      const mineDoc = people[myId];
-      if (mineDoc && !editing) {
-        me = { name: mineDoc.name || '', bday: mineDoc.bday || '', items: Array.isArray(mineDoc.items) ? mineDoc.items : [] };
-      } else if (!mineDoc && !me.name && u.displayName) {
-        me.name = u.displayName.split(' ')[0];
-      }
-      if (document.activeElement !== $('myname')) $('myname').value = me.name;
-      if (document.activeElement !== $('mybday')) $('mybday').value = me.bday;
-      lockMine(false); status(''); renderMine(); renderOthers();
-    }, (err) => {
-      clearTimeout(timer); console.log('[wishlist] load failed', err);
-      status("Couldn't load the shared lists. Check that Firestore is set up and the rules are deployed.");
-    });
+  const timer = setTimeout(() => status("The shared lists are taking a while to load. Check your connection."), 10000);
+  onSnapshot(collection(db, 'wishes'), (snap) => {
+    clearTimeout(timer);
+    const next = {};
+    snap.forEach(d => { const v = d.data(); next[d.id] = { name: v.name, bday: v.bday, items: v.items }; });
+    people = next;
+    const mineDoc = people[myId];
+    if (mineDoc && !editing) {
+      me = { name: mineDoc.name || '', bday: mineDoc.bday || '', items: Array.isArray(mineDoc.items) ? mineDoc.items : [] };
+      if (!ident.created) { ident = { ...ident, created: true }; storeId(ident); }
+    }
+    if (document.activeElement !== $('myname')) $('myname').value = me.name;
+    if (document.activeElement !== $('mybday')) $('mybday').value = me.bday;
+    lockMine(false); status(''); renderMine(); renderOthers();
+  }, (err) => {
+    clearTimeout(timer); console.log('[wishlist] load failed', err);
+    status("Couldn't load the shared lists right now. Try refreshing in a moment.");
   });
-  $('signout').addEventListener('click', () => signOut(auth));
 }
 }
 </script>

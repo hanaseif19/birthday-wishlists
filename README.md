@@ -1,30 +1,13 @@
-# Birthday Wishlists: deploy on Firebase (free)
+# Birthday Wishlists
 
-Friends sign in with Google, then each person can edit only their own list. Everyone signed in can see all the lists.
+Live at **https://birthday-wishlists-7c5e73.web.app**
 
-## 1. Create the Firebase project (about 3 minutes)
-1. Go to https://console.firebase.google.com → **Add project**. Analytics isn't needed.
-2. **Build → Authentication → Get started → Sign-in method → Google → Enable → Save**
-3. **Build → Firestore Database → Create database**. Pick a location near you (e.g. `europe-west`) and start in **production mode**.
-4. **Project settings (gear icon) → Your apps → Web (</>)**. Register an app; you don't need Firebase Hosting ticked here.
-   Copy the `firebaseConfig` values into `docs/index.html` (search for `FIREBASE_CONFIG`).
-   You only need `apiKey`, `authDomain`, `projectId` and `appId`.
-   The config is safe to put in the page. The Firestore rules are what protect the data.
+A shared birthday wishlist for friends. Anyone with the link can view every list. Each person can edit only their own list,
+from the browser they created it in.
 
-## 2. Deploy
-```bash
-npm install -g firebase-tools
-firebase login
-cd wishlist-site
-firebase deploy --project YOUR_PROJECT_ID
-```
-This uploads the site and the security rules in `firestore.rules`.
-You'll get a link like `https://YOUR_PROJECT_ID.web.app`. Send that to your friends.
+- `docs/index.html` is the whole site
+- `firestore.rules` holds the database rules. Each list stores a hash of a private key kept in its owner's browser,
+  and changes are accepted only with the matching key.
+- Hosting and the database run on Firebase's free Spark plan, project `birthday-wishlists-7c5e73`.
 
-## Updating later
-Edit `docs/index.html` and run `firebase deploy --project YOUR_PROJECT_ID` again.
-
-## Hosting somewhere else (Netlify, Vercel, GitHub Pages)
-You can upload just `docs/index.html` there instead. Then add that site's domain under
-**Authentication → Settings → Authorized domains**, or Google sign-in will fail.
-Deploy the rules once with: `firebase deploy --only firestore:rules --project YOUR_PROJECT_ID`
+To redeploy after a change: `firebase deploy --project birthday-wishlists-7c5e73`
